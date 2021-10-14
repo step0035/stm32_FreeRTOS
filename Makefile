@@ -1,5 +1,5 @@
 MACH = cortex-m4
-CFLAGS = -c -g -mcpu=$(MACH) -mthumb -mfloat-abi=soft -std=gnu11 -o0 -Wall
+CFLAGS = -g -mcpu=$(MACH) -mthumb -mfloat-abi=soft -std=gnu11 -o0 -Wall
 LDFLAGS= -g -mcpu=$(MACH) -mthumb -mfloat-abi=soft --specs=nano.specs -T linker.ld -Wl,-Map=memory.map
 
 CROSS_COMPILE = arm-none-eabi-
@@ -19,13 +19,15 @@ HALDIR = $(DRIVERDIR)/STM32F4xx_HAL_Driver
 HALSRCDIR = $(HALDIR)/Src
 CMSISDIR = $(DRIVERDIR)/CMSIS
 OBJDIR = $(BASEDIR)/obj
+BINDIR = $(OBJDIR)/bin
 
 INCLUDES =
-INCLUDES += -I $(BASEDIR)/inc
-INCLUDES += -I $(DRIVERDIR)/CMSIS/Core/Include
-INCLUDES += -I $(DRIVERDIR)/CMSIS/Device/inc
-INCLUDES += -I $(DRIVERDIR)/STM32F4xx_HAL_Driver/Inc
+INCLUDES += -I$(BASEDIR)/inc
+INCLUDES += -I$(DRIVERDIR)/CMSIS/Core/Include
+INCLUDES += -I$(DRIVERDIR)/CMSIS/Device/inc
+INCLUDES += -I$(DRIVERDIR)/STM32F4xx_HAL_Driver/Inc
 
+CFLAGS += $(INCLUDES)
 CFLAGS += -DUSE_HAL_DRIVER=1
 CFLAGS += -DSTM32F410Rx=1
 
@@ -42,29 +44,35 @@ ALL_OBJ_FILES += $(HAL_OBJ_FILES)
 ALL_OBJ_FILES += $(CMSIS_OBJ_FILES)
 
 .PHONY: all
-all: mkdir $(ALL_OBJ_FILES)
+all: mkdir $(BINDIR)/final.elf
 
 .PHONY: mkdir
 mkdir:
-	mkdir -p $(OBJDIR)
+	mkdir -p $(BINDIR)
 	@echo "\n\r[ALL_OBJ_FILES] $(ALL_OBJ_FILES)"
+	@echo "\n\r[INCLUDES] $(INCLUDES)"
+
+$(BINDIR)/final.elf: $(ALL_OBJ_FILES)
+	@echo "\n\r[LD] $@"
+	$(LD) $(CFLAGS) $(LDFLAGS) $^ -o $@
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
 	@echo "\n\r[CC] $@"
-	$(CC) $(CFLAGS) -o $@ $^ $(INCLUDES)
+	$(CC) $(CFLAGS) -c $^ -o $@
 
 $(OBJDIR)/%.o: $(HALSRCDIR)/%.c
 	@echo "\n\r[CC] $@"
-	$(CC) $(CFLAGS) -o $@ $^ $(INCLUDES)
+	$(CC) $(CFLAGS) -c $^ -o $@
 
 $(OBJDIR)/%.o: $(CMSISDIR)/Device/src/%.c
 	@echo "\n\r[CC] $@"
-	$(CC) $(CFLAGS) -o $@ $^ $(INCLUDES)
+	$(CC) $(CFLAGS) -c $^ -o $@
 
 $(OBJDIR)/%.o: $(CMSISDIR)/Device/src/%.s
 	@echo "\n\r[CC] $@"
-	$(CC) $(CFLAGS) -o $@ $^ $(INCLUDES)
+	$(CC) $(CFLAGS) -c $^ -o $@
 
 .PHONY: clean
 clean:
 	rm -rf $(OBJDIR)
+	rm -rf *.map
