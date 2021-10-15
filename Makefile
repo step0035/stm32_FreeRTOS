@@ -1,7 +1,3 @@
-MACH = cortex-m4
-CFLAGS = -g -mcpu=$(MACH) -mthumb -mfloat-abi=soft -std=gnu11 -o0 -Wall
-LDFLAGS= -g -mcpu=$(MACH) -mthumb -mfloat-abi=soft --specs=nano.specs -T linker.ld -Wl,-Map=memory.map
-
 CROSS_COMPILE = arm-none-eabi-
 AR = $(CROSS_COMPILE)ar
 CC = $(CROSS_COMPILE)gcc
@@ -21,6 +17,10 @@ CMSISDIR = $(DRIVERDIR)/CMSIS
 OBJDIR = $(BASEDIR)/build
 BINDIR = $(OBJDIR)/bin
 
+MACH = cortex-m4
+CFLAGS = -g -mcpu=$(MACH) -mthumb -mfloat-abi=soft -std=gnu11 -o0 -Wall
+LDFLAGS= -g -mcpu=$(MACH) -mthumb -mfloat-abi=soft --specs=nano.specs -T linker.ld -Wl,-Map=$(BINDIR)/memory.map
+
 INCLUDES =
 INCLUDES += -I$(BASEDIR)/inc
 INCLUDES += -I$(DRIVERDIR)/CMSIS/Core/Include
@@ -37,7 +37,7 @@ CMSIS_FILES += $(wildcard $(CMSISDIR)/Device/src/*.*)
 
 OBJ_FILES = $(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(SRC_FILES))
 HAL_OBJ_FILES = $(patsubst $(HALSRCDIR)/%.c, $(OBJDIR)/%.o, $(HAL_FILES))
-CMSIS_OBJ_FILES = $(patsubst $(CMSISDIR)/Device/src/%.*, $(OBJDIR)/%.o, $(CMSIS_FILES))
+CMSIS_OBJ_FILES = $(filter %.o, $(patsubst $(CMSISDIR)/Device/src/%.c, $(OBJDIR)/%.o, $(CMSIS_FILES)) $(patsubst $(CMSISDIR)/Device/src/%.s, $(OBJDIR)/%.o, $(CMSIS_FILES)))
 ALL_OBJ_FILES = $(OBJ_FILES)
 ALL_OBJ_FILES += $(HAL_OBJ_FILES)
 ALL_OBJ_FILES += $(CMSIS_OBJ_FILES)
@@ -63,11 +63,14 @@ $(OBJDIR)/%.o: $(HALSRCDIR)/%.c
 	@echo "\n\r[CC] $@"
 	$(CC) $(CFLAGS) -c $^ -o $@
 
-$(OBJDIR)/%.o: $(CMSISDIR)/Device/src/%.*
+$(OBJDIR)/%.o: $(CMSISDIR)/Device/src/%.c
+	@echo "\n\r[CC] $@"
+	$(CC) $(CFLAGS) -c $^ -o $@
+
+$(OBJDIR)/%.o: $(CMSISDIR)/Device/src/%.s
 	@echo "\n\r[CC] $@"
 	$(CC) $(CFLAGS) -c $^ -o $@
 
 .PHONY: clean
 clean:
 	rm -rf $(OBJDIR)
-	rm -rf *.map
