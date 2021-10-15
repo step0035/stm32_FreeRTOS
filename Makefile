@@ -33,12 +33,11 @@ CFLAGS += -DSTM32F410Rx=1
 
 SRC_FILES = $(wildcard $(SRCDIR)/*.c)
 HAL_FILES = $(wildcard $(HALSRCDIR)/*.c)
-CMSIS_FILES += $(wildcard $(CMSISDIR)/Device/src/*.c $(CMSISDIR)/Device/src/*.s)
+CMSIS_FILES += $(wildcard $(CMSISDIR)/Device/src/*.*)
 
 OBJ_FILES = $(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(SRC_FILES))
 HAL_OBJ_FILES = $(patsubst $(HALSRCDIR)/%.c, $(OBJDIR)/%.o, $(HAL_FILES))
-CMSIS_OBJ_FILES = $(patsubst $(CMSISDIR)/Device/src/%.c, $(OBJDIR)/%.o, $(CMSIS_FILES))
-CMSIS_OBJ_FILES += $(patsubst $(CMSISDIR)/Device/src/%.s, $(OBJDIR)/%.o, $(CMSIS_FILES))
+CMSIS_OBJ_FILES = $(patsubst $(CMSISDIR)/Device/src/%.*, $(OBJDIR)/%.o, $(CMSIS_FILES))
 ALL_OBJ_FILES = $(OBJ_FILES)
 ALL_OBJ_FILES += $(HAL_OBJ_FILES)
 ALL_OBJ_FILES += $(CMSIS_OBJ_FILES)
@@ -64,11 +63,7 @@ $(OBJDIR)/%.o: $(HALSRCDIR)/%.c
 	@echo "\n\r[CC] $@"
 	$(CC) $(CFLAGS) -c $^ -o $@
 
-$(OBJDIR)/%.o: $(CMSISDIR)/Device/src/%.c
-	@echo "\n\r[CC] $@"
-	$(CC) $(CFLAGS) -c $^ -o $@
-
-$(OBJDIR)/%.o: $(CMSISDIR)/Device/src/%.s
+$(OBJDIR)/%.o: $(CMSISDIR)/Device/src/%.*
 	@echo "\n\r[CC] $@"
 	$(CC) $(CFLAGS) -c $^ -o $@
 
